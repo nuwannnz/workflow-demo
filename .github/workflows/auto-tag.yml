@@ -10,6 +10,8 @@ on:
 jobs:
   auto-tag:
     if: github.event.pull_request.merged == true
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
