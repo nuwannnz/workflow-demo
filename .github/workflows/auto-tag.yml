@@ -82,7 +82,7 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add apps/ui/package.json
-          git commit -m "chore: bump web version to $new_version [skip ci]"
+          git commit -m "chore: [web] bump version to $new_version"
           git tag $tag
           git push origin main --tags
           git push origin main
@@ -106,7 +106,7 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add apps/api/package.json
-          git commit -m "chore: bump api version to $new_version [skip ci]"
+          git commit -m "chore: [api] bump version to $new_version"
           git tag $tag
           git push origin main --tags
           git push origin main
