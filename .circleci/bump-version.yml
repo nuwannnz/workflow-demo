@@ -64,7 +64,7 @@ jobs:
 
             # Push back to the develop branch
             # git push origin HEAD:develop
-            git push -q https://${GITHUB_PAT}@github.com/nuwannnz/workflow-demo.git develop
+            git push -q https://${GITHUB_PAT}@github.com/nuwannnz/workflow-demo.git main
 
 
 workflows:
