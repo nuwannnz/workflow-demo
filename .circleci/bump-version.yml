@@ -1,0 +1,74 @@
+version: 2.1
+
+jobs:
+  bump-web-version:
+    docker:
+      - image: cimg/node:22.19.0
+    steps:
+      - checkout
+      - run:
+          name: Install jq
+          command: |
+            sudo apt-get update -y && sudo apt-get install -y jq
+      - run:
+          name: Bump apps/web version based on last commit
+          command: |
+            set -eo pipefail
+
+            COMMIT_MSG=$(git log -1 --pretty=%B | tr -d '\n')
+            echo "Last commit: $COMMIT_MSG"
+
+            TYPE=$(echo "$COMMIT_MSG" | sed -n 's/^\([a-zA-Z]\+\)(.*):.*/\1/p')
+            SCOPES=$(echo "$COMMIT_MSG" | sed -n 's/^[a-zA-Z]\+(\(.*\)): .*/\1/p' | tr ',' '\n' | tr -d ' ')
+
+            if echo "$SCOPES" | grep -qx "web"; then
+              echo "Scope includes web. Proceeding."
+            else
+              echo "Scope does not include web. Skipping bump."
+              exit 0
+            fi
+
+            if [ "$TYPE" = "feat" ] || [ "$TYPE" = "fix" ]; then
+              echo "Commit type $TYPE is eligible for bump."
+            else
+              echo "Commit type $TYPE is not eligible. Skipping bump."
+              exit 0
+            fi
+
+            CURRENT_VERSION=$(jq -r .version apps/web/package.json)
+            echo "Current version: $CURRENT_VERSION"
+
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+
+            if [ "$TYPE" = "feat" ]; then
+              MINOR=$((MINOR + 1))
+              PATCH=0
+            elif [ "$TYPE" = "fix" ]; then
+              PATCH=$((PATCH + 1))
+            fi
+
+            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+            echo "New version: $NEW_VERSION"
+
+            tmpfile=$(mktemp)
+            jq ".version = \"$NEW_VERSION\"" apps/web/package.json > "$tmpfile" && mv "$tmpfile" apps/web/package.json
+
+            git config user.email "ci@circleci.com"
+            git config user.name "circleci"
+            git add apps/web/package.json
+            if git diff --cached --quiet; then
+              echo "No version changes detected. Skipping commit."
+              exit 0
+            fi
+            git commit -m "ci: version bump $NEW_VERSION"
+
+            # Push back to the develop branch
+            # git push origin HEAD:develop
+            git push -q https://${GITHUB_PAT}@github.com/nuwannnz/workflow-demo.git develop
+
+
+workflows:
+  bump-version:
+    jobs:
+      - bump-web-version
+
