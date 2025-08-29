@@ -34,6 +34,7 @@ jobs:
               echo "Commit type $TYPE is not eligible. Skipping bump."
               exit 0
             fi
+            
 
             CURRENT_VERSION=$(jq -r .version apps/web/package.json)
             echo "Current version: $CURRENT_VERSION"
